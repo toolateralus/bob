@@ -141,11 +141,11 @@ fn create_main_c(path: &str) {
 
 fn main() {
     let stdin = std::io::stdin();
-
+    
     let proj_name = read_option(&stdin, "Enter a project name");
     let use_src = read_option(&stdin, "Use a 'src' dir? [y/n]").to_lowercase() == "y";
-    let use_include = read_option(&stdin, "Use a 'include' dir? [y/n]").to_lowercase() == "y";
-    let libraries = read_several_options(&stdin, "Enter any libraries you want to link against (omit the -l) and type 'done' when you're finished.");
+    let use_include = read_option(&stdin, "Use an 'include' dir? [y/n]").to_lowercase() == "y";
+    let libraries = read_several_options(&stdin, "Enter any libraries you want to link against  (one at a time, enter to send) and type 'done' when you're finished.");
 
     // generate the makefile.
     let content = generate_makefile(proj_name, use_src, use_include, libraries);
