@@ -23,7 +23,13 @@ fn read_several_options(stdin: &std::io::Stdin, init_prompt: &str) -> Vec<String
         let mut buf = String::new();
         err(stdin.read_line(&mut buf));
         buf = buf.trim_end_matches("\n").to_string();
+
+        if buf.is_empty() {
+            println!("not adding empty option");
+            continue;
+        }
         if buf == "done" {
+            println!("done fetching options");
             break;
         }
 
@@ -60,9 +66,9 @@ fn create_makefile(
     };
 
    let make_target_all = if use_src_dir {
-    format!("SRCS := {}\nOBJS := {}\n\nall: directories {}\n\ndirectories:\n\tmkdir -p $(OBJ_DIR) $(BIN_DIR)\n\n{}: $(OBJS)\n\t$(CC) $(CFLAGS) $(LD_FLAGS) -o $(BIN_DIR)/$@ $^\n\n$(OBJ_DIR)/%.o: src/%.c\n\tmkdir -p $(@D)\n\t$(CC) $(CFLAGS) -c $< -o $@\n\nclean:\n\trm -rf $(OBJ_DIR) $(BIN_DIR)", wildcard, objs, proj_name, proj_name)
+    format!("SRCS := {}\nOBJS := {}\n\nall: directories {}\n\ndirectories:\n\tmkdir -p $(OBJ_DIR) $(BIN_DIR)\n\n{}: $(OBJS)\n\t$(CC) $(CFLAGS) -o $(BIN_DIR)/$@ $^ $(LD_FLAGS)\n\n$(OBJ_DIR)/%.o: src/%.c\n\tmkdir -p $(@D)\n\t$(CC) $(CFLAGS) -c $< -o $@\n\nclean:\n\trm -rf $(OBJ_DIR) $(BIN_DIR)", wildcard, objs, proj_name, proj_name)
 } else {
-    format!("SRCS := {}\nOBJS := {}\n\nall: directories {}\n\ndirectories:\n\tmkdir -p $(OBJ_DIR) $(BIN_DIR)\n\n{}: $(OBJS)\n\t$(CC) $(CFLAGS) $(LD_FLAGS) -o $(BIN_DIR)/$@ $^\n\n$(OBJ_DIR)/%.o: %.c\n\tmkdir -p $(@D)\n\t$(CC) $(CFLAGS) -c $< -o $@\n\nclean:\n\trm -rf $(OBJ_DIR) $(BIN_DIR)", wildcard, objs, proj_name, proj_name)
+    format!("SRCS := {}\nOBJS := {}\n\nall: directories {}\n\ndirectories:\n\tmkdir -p $(OBJ_DIR) $(BIN_DIR)\n\n{}: $(OBJS)\n\t$(CC) $(CFLAGS) -o $(BIN_DIR)/$@ $^ $(LD_FLAGS)\n\n$(OBJ_DIR)/%.o: %.c\n\tmkdir -p $(@D)\n\t$(CC) $(CFLAGS) -c $< -o $@\n\nclean:\n\trm -rf $(OBJ_DIR) $(BIN_DIR)", wildcard, objs, proj_name, proj_name)
 };
 
 let makefile_content = format!("{}\n\n{}", make_vars, make_target_all);
