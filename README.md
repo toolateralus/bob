@@ -1,22 +1,31 @@
-### to install
-- you need `make` to use `Makefile`s. to get it:
- 
-`apt install make`
+## to install
+dependencies :
+`git`
+`make`
+`rust`
 
-- simply clone the repo, run 
+Note: (this is from [rust's website](https://www.rust-lang.org/learn/get-started) and may be outdated.)
+to install rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` 
 
-`cargo b --release`
+to get make and git: `sudo apt install make git`
 
-- then in your `.bashrc` (I don't know how to install this on windows, but there's no platform specific code.)
+- clone the repo: `git clone https://github.com/toolateralus/bob.git`
+- build the release: `cargo b --release`
+
+#### adding a cmd line alias for the binary
+in your `.bashrc` (I don't know how to install this on windows, but there's no platform specific code.)
 add: 
 
 `alias bob='path/to/src/target/release/bob'`
 
+for example, if you've downloaded the source at `~/source/rust/bob`
+
+`alias bob='~/source/rust/bob/target/release/bob`
+
 
 then, once you've installed it, restart your terminal to reload your bash configuration.
 
-
-### to use
+## to use
 
 make sure you've followed the previous installation steps. you should have a cmd line program called `bob`
 
