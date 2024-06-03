@@ -20,7 +20,7 @@ Note: You must restart your terminal session to be able to use this new alias.
 
 ## Usage
 
-- TLDR: run `bob` or `bob --d <target_directory>` and follow the prompt.
+_TLDR_: run `bob` or `bob --d <target_directory>` and follow the prompt.
 
 make sure you've followed the previous installation steps. you should have a command line program called `bob`
 
@@ -36,15 +36,20 @@ once you run `bob` in your desired mode, it's as simple as answering the prompts
 
 A few notes about the available options:
 
-- Languages
+### _Languages_
   Right now only C and C++ are supported.
-  `clang` and `clang++` are the compilers that are supported. if you'd like `gcc` support, please make an issue requesting this feature.
+  `clang` and `clang++` are the compilers that are supported.
   
-- Standard Libraries
+  _if you'd like `gcc` support, please make an issue requesting this feature_.
+  
+### _Standard Libraries_
   you can use the `latest` option for the latest known stdlib for your chosen compiler, or you can enter the exact library you want.
+  
   You must provide the entire library option, such as `-std=c++11` or whatever you want to use.
 
-- Libraries
+### _Libraries_
   at the end of the creation, there will be a prompt to add any libraries you want to link to. simply typing `done` will exit this prompt,
-  otherwise it will loop and add as many libraries you want. You should omit the `-l` prefix for any library you want. If you wanted to link against `raylib`,
+  otherwise it will loop and add as many libraries you want.
+  
+  You should omit the `-l` prefix for any library you want. If you wanted to link against `raylib`,
   you'd type `raylib`, press enter, then type done and it will finish the project creation. There is no way for us to check if you misspelled a library name, so be careful!
