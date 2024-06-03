@@ -1,10 +1,21 @@
 
 
-fn read_option(stdin: &std::io::Stdin, prompt: &str) -> String {
+type InputValidator = fn(input: String) -> bool;
+
+fn read_option(stdin: &std::io::Stdin, prompt: &str, validator: Option<InputValidator>) -> String {
     println!("{}", prompt);
     let mut buf = String::new();
     stdin.read_line(&mut buf).unwrap();
     buf = buf.trim_end_matches("\n").to_string();
+    
+    if validator.is_some() {
+        let v = validator.unwrap();
+        if !v(buf.clone()) {
+            println!("Invalid option. Retrying..");
+            return read_option(stdin, prompt, validator);
+        }
+    }
+    
     return buf;
 }
 
@@ -87,14 +98,14 @@ fn generate_makefile(
     
     let srcs_wildcard = format!("$(wildcard {}*.c)", src_dir);
     
-    let objs = generate_objs(use_src_dir, &srcs_wildcard);
+    let objs = objs_str(use_src_dir, &srcs_wildcard);
 
-    let make_file = get_makefile_string(use_src_dir, srcs_wildcard, objs, proj_name);
+    let make_file = makefile_str(use_src_dir, srcs_wildcard, objs, proj_name);
 
     return make_vars + "\n\n" + &make_file;
 }
 
-fn generate_objs(use_src_dir: bool, wildcard: &String) -> String {
+fn objs_str(use_src_dir: bool, wildcard: &String) -> String {
     if use_src_dir {
         format!("$(patsubst src/%.c,$(OBJ_DIR)/%.o,{})", wildcard)
     } else {
@@ -102,7 +113,7 @@ fn generate_objs(use_src_dir: bool, wildcard: &String) -> String {
     }
 }
 
-fn get_makefile_string(
+fn makefile_str(
     use_src_dir: bool,
     wildcard: String,
     objs: String,
@@ -134,9 +145,9 @@ fn get_makefile_string(
     
 }
 
-fn create_main_c(path: &str) {
-    let c_boiler_plate = "#include <stdio.h>\nint main(int argc, char *argv[]) {\n\treturn 0;\n}";
-    std::fs::write(path, c_boiler_plate).unwrap();
+fn create_main_c_file(path: &str) {
+    let c_code = "#include <stdio.h>\nint main(int argc, char *argv[]) {\n\treturn 0;\n}";
+    std::fs::write(path, c_code).unwrap();
 }
 
 fn main() {
@@ -144,11 +155,33 @@ fn main() {
     
     // read cmd line options
     
-    let proj_name = read_option(&stdin, "Enter a project name");
-    let lang = read_option(&stdin, "Language? [c/c++]");
-    let standard = read_option(&stdin, "Standard library to use? [latest/-std=c++2b/-std=c11 etc]");
-    let use_src = read_option(&stdin, "Use a 'src' dir? [y/n]").to_lowercase() == "y";
-    let use_include = read_option(&stdin, "Use an 'include' dir? [y/n]").to_lowercase() == "y";
+    let proj_name = read_option(&stdin, "Enter a project name", None);
+    
+    let lang = read_option(&stdin, "Language? [c/c++]", Some(|input: String| {
+        let input = input.to_lowercase();
+        return input == "c" || input == "cpp" || input == "c++";
+    }));
+    
+    let standard = read_option(&stdin, "Standard library to use? [latest/-std=c++2b/-std=c11 etc]", Some(|input: String|{
+        if input == "latest" {
+            return true;
+        }
+        if input.starts_with("-std=") {
+            return true;
+        }
+        return false;
+    }));
+    
+    let use_src = read_option(&stdin, "Use a 'src' dir? [y/n]", Some(|input: String| {
+        let input = input.to_lowercase();
+        return input == "y" || input == "n";
+    })).to_lowercase() == "y";
+    
+    let use_include = read_option(&stdin, "Use an 'include' dir? [y/n]", Some(|input: String| {
+        let input = input.to_lowercase();
+        return input == "y" || input == "n";
+    })).to_lowercase() == "y";
+    
     let libraries = read_several_options(&stdin, "Enter any libraries you want to link against  (one at a time, enter to send) and type 'done' when you're finished.");
     
     // generate the makefile.
@@ -162,8 +195,8 @@ fn main() {
     
     if use_src {
         std::fs::create_dir("src").unwrap();
-        create_main_c("src/main.c");
+        create_main_c_file("src/main.c");
     } else {
-        create_main_c("main.c");
+        create_main_c_file("main.c");
     }
 }
