@@ -1,4 +1,3 @@
-
 pub fn generate_makefile(
     proj_name: String,
     use_src_dir: bool,
@@ -77,7 +76,12 @@ pub fn objs_str(use_src_dir: bool, wildcard: &String) -> String {
     }
 }
 
-pub fn makefile_str(use_src_dir: bool, wildcard: String, objs: String, proj_name: String) -> String {
+pub fn makefile_str(
+    use_src_dir: bool,
+    wildcard: String,
+    objs: String,
+    proj_name: String,
+) -> String {
     format!(
         "SRCS := {}\n\
         OBJS := {}\n\

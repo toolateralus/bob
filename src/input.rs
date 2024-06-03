@@ -1,5 +1,6 @@
 use std::{path::Path, process::exit};
 pub type InputValidator = fn(input: String) -> bool;
+
 pub fn read_option(
     stdin: &std::io::Stdin,
     prompt: &str,
