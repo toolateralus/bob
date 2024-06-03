@@ -34,8 +34,8 @@ there are 2 modes for running `bob`
   
 once you run `bob` in your desired mode, it's as simple as answering the prompts. 
 
-A few notes about the available options:
 
+## _Available Options_
 ### _Languages_
   Right now only C and C++ are supported.
   `clang` and `clang++` are the compilers that are supported.
