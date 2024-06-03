@@ -1,5 +1,43 @@
-use std::{path::Path, process::exit};
+use std::{io::Write, path::Path, process::exit};
 pub type InputValidator = fn(input: String) -> bool;
+
+pub fn check_bashrc_for_alias() {
+    let home_dir = std::env::var("HOME").unwrap_or_else(|_| String::from(""));
+    let bashrc_path = format!("{}/.bashrc", home_dir);
+
+    // Read the contents of the .bashrc file
+    let bashrc_content = match std::fs::read_to_string(&bashrc_path) {
+        Ok(content) => content,
+        Err(_) => return, 
+    };
+
+    // Check if the alias is already added
+    if bashrc_content.contains("alias bob=") {
+        return;
+    }
+    
+    // Prompt the user to add the alias
+    let stdin = std::io::stdin();
+    let add_alias = read_option(&stdin, "Do you want to add the 'bob' alias to your .bashrc file? [y/n]", Some(validate_yes_no_response)).to_lowercase() == "y" ;
+    
+    if add_alias {
+        
+        // add the alais.
+        let alias = format!("alias bob='{}/target/release/bob'", std::env::current_dir().unwrap().display());
+        
+        match std::fs::OpenOptions::new().append(true).open(&bashrc_path) {
+            Ok(mut file) => {
+                if let Err(error) = writeln!(file, "{}", alias) {
+                    println!("Unable to write to .bashrc file. Error: {}", error);
+                }
+                exit(0);
+            }
+            Err(error) => {
+                println!("Unable to open .bashrc file. Error: {}", error);
+            }
+        }
+    }
+}
 
 pub fn read_option(
     stdin: &std::io::Stdin,

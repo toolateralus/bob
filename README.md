@@ -1,38 +1,50 @@
-## to install
-dependencies :
-`git`
-`make`
-`rust`
-
-Note: (this is from [rust's website](https://www.rust-lang.org/learn/get-started) and may be outdated.)
-to install rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` 
-
-to get make and git: `sudo apt install make git`
-
-- clone the repo: `git clone https://github.com/toolateralus/bob.git`
-- build the release: `cargo b --release`
-
-#### adding a cmd line alias for the binary
-in your `.bashrc` (I don't know how to install this on windows, but there's no platform specific code.)
-add: 
-
-`alias bob='path/to/src/target/release/bob'`
-
-for example, if you've downloaded the source at `~/source/rust/bob`
-
-`alias bob='~/source/rust/bob/target/release/bob`
+# Bob the makefile builder
+A simple rust command line tool to streamline creating boilerplate for C++ and C projects using `make`.
 
 
-then, once you've installed it, restart your terminal to reload your bash configuration.
+## Prerequisites
+- `rust` compiler.
+- the `clang` and `clang++` compilers are what the makefile will default to using.
+- you'll also need `make` to run the makefiles :P
 
-## to use
 
-make sure you've followed the previous installation steps. you should have a cmd line program called `bob`
+## Installing
 
-- navigate to wherever you want your new project to go. for example, let's say we're in `~/source/c/my_new_project`
-- run `bob`
-- instructions will come up on screen in the form of several prompts (binary name, use src/include dirs, libraries to link against)
+To add a command line alias to your linux bash shell, you can run 
 
-once completed, you'll have a `Makefile`, `main.c` and the optional dirs if specified. running `make` will create `bin` and `objs` directories, and your program will be located in `bin`.
+`cargo b --release ; cargo r`
 
-simple as that.
+and follow the prompt. Simply answer yes to the prompt asking if you want to add the alias.
+
+Note: You must restart your terminal session to be able to use this new alias.
+
+## Usage
+
+- TLDR: run `bob` or `bob --d <target_directory>` and follow the prompt.
+
+make sure you've followed the previous installation steps. you should have a command line program called `bob`
+
+there are 2 modes for running `bob`
+
+- No arguments, run it in the directory you want your project to be created.
+
+- with the `--d` or `--directory` argument:
+  - The tool will run at the specified directory, only if it exists.
+  
+  
+once you run `bob` in your desired mode, it's as simple as answering the prompts. 
+
+A few notes about the available options:
+
+- Languages
+  Right now only C and C++ are supported.
+  `clang` and `clang++` are the compilers that are supported. if you'd like `gcc` support, please make an issue requesting this feature.
+  
+- Standard Libraries
+  you can use the `latest` option for the latest known stdlib for your chosen compiler, or you can enter the exact library you want.
+  You must provide the entire library option, such as `-std=c++11` or whatever you want to use.
+
+- Libraries
+  at the end of the creation, there will be a prompt to add any libraries you want to link to. simply typing `done` will exit this prompt,
+  otherwise it will loop and add as many libraries you want. You should omit the `-l` prefix for any library you want. If you wanted to link against `raylib`,
+  you'd type `raylib`, press enter, then type done and it will finish the project creation. There is no way for us to check if you misspelled a library name, so be careful!

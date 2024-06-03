@@ -7,8 +7,8 @@ use crate::input::*;
 use std::{path::Path, process::exit};
 
 fn main() {
+    check_bashrc_for_alias();
     let stdin = std::io::stdin();
-
     // cd to a provided directory if the user passes in a path.
     change_directory_if_needed();
 
