@@ -1,5 +1,6 @@
 # Bob the makefile builder
 A simple rust command line tool to streamline creating boilerplate for C++ and C projects using `make`.
+Please, let me know if you enjoy the tool, or would like to have any features added.
 
 
 ## Prerequisites
