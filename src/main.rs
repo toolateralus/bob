@@ -55,8 +55,14 @@ fn main() {
     let libraries = read_several_options(&stdin, "Enter any libraries you want to link against  (one at a time, enter to send) and type 'done' when you're finished.");
 
     // generate the makefile.
-    let make_content =
-        generate_makefile(proj_name, use_src, use_include, lang, standard, libraries);
+    let make_content = generate_makefile(&GeneratorOptions::new(
+        proj_name,
+        use_src,
+        use_include,
+        lang.clone(),
+        standard,
+        libraries,
+    ));
 
     // write out files.
     match std::fs::write("Makefile", make_content) {
@@ -76,6 +82,11 @@ fn main() {
         }
     }
 
+    let ext = if lang == "cpp" || lang == "c++" {
+        "cpp"
+    } else {
+        "c"
+    };
     if use_src {
         match std::fs::create_dir("src") {
             Ok(_) => {}
@@ -84,8 +95,8 @@ fn main() {
                 exit(1);
             }
         }
-        create_main_c_file("src/main.c");
+        create_main_c_file(format!("src/main.{}", ext).as_str());
     } else {
-        create_main_c_file("main.c");
+        create_main_c_file(format!("main.{}", ext).as_str());
     }
 }

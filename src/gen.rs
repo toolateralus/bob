@@ -1,46 +1,138 @@
-pub fn generate_makefile(
-    proj_name: String,
-    use_src_dir: bool,
-    use_inc_dir: bool,
-    lang: String,
-    standard: String,
-    libraries: Vec<String>,
-) -> String {
-    let mut is_cpp = false;
-    let lang = lang.to_lowercase();
-    // get c++ or c compiler.
-    let compiler = if lang == "c++" || lang == "cpp" {
-        is_cpp = true;
-        "clang++"
-    } else if lang == "c" {
-        "clang"
-    } else {
-        panic!("unknown: cannot find a compiler for language: {}", lang);
-    };
+pub enum Language {
+    C,
+    Cpp,
+}
 
-    // get the std libarary to use
-    let std = if standard == "latest" {
-        if is_cpp {
-            "-std=c++2b"
-        } else {
-            "-std=c2x"
+impl Language {
+    fn get_compiler(&self) -> &str {
+        match self {
+            Language::C => "clang",
+            Language::Cpp => "clang++",
         }
-    } else {
-        standard.as_str()
-    };
+    }
+    fn get_extension(&self) -> &str {
+        match self {
+            Language::C => "c",
+            Language::Cpp => "cpp",
+        }
+    }
+}
+impl From<String> for Language {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "c" => Language::C,
+            "c++" |
+            "cpp" => Language::Cpp,
+            _ => {
+                panic!("invalid language option");
+            }
+        }
+    }
+}
 
-    let include = if use_inc_dir { "-Iinclude" } else { "" };
+pub struct StdLibOption {
+    pub value: String,
+}
 
-    // join the libraries and prepend the -l prefix.
-    // -lm, -lraylib etc.
-    let libs_formatted: String = libraries
-        .iter()
-        .map(|lib| format!("-l{}", lib))
-        .collect::<Vec<_>>()
-        .join(" ");
+impl From<(bool, String)> for StdLibOption {
+    fn from(options: (bool, String)) -> Self {
+        let (is_cpp, standard) = options;
+        let std = if standard == "latest" {
+            if is_cpp {
+                "-std=c++2b"
+            } else {
+                "-std=c2x"
+            }
+        } else {
+            standard.as_str()
+        };
 
-    // source directory for using a /src
-    let src_dir = if use_src_dir { "src/" } else { "" };
+        return Self {
+            value: std.to_string(),
+        };
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum DirectoryOptions {
+    UseNeither,
+    UseSource,
+    UseInclude,
+    UseBoth,
+}
+impl DirectoryOptions {
+    pub fn get_paths(&self, include: &mut &str, src: &mut &str) {
+        match self {
+            DirectoryOptions::UseNeither => {
+                *include = "";
+                *src = "";
+            }
+            DirectoryOptions::UseSource => *src = "src",
+            DirectoryOptions::UseInclude => *include = "-Iinclude",
+            DirectoryOptions::UseBoth => {
+                *src = "src";
+                *include = "-Iinclude"
+            }
+        }
+    }
+}
+
+impl From<(bool, bool)> for DirectoryOptions {
+    fn from(src_include: (bool, bool)) -> Self {
+        match src_include {
+            (false, false) => DirectoryOptions::UseNeither,
+            (true, false) => DirectoryOptions::UseSource,
+            (false, true) => DirectoryOptions::UseInclude,
+            (true, true) => DirectoryOptions::UseBoth,
+        }
+    }
+}
+
+pub struct GeneratorOptions {
+    pub stdlib: StdLibOption,
+    pub lang: Language,
+    pub dirs: DirectoryOptions,
+    pub libraries: Vec<String>,
+    pub name: String,
+}
+
+impl GeneratorOptions {
+    pub fn new(
+        proj_name: String,
+        use_src: bool,
+        use_include: bool,
+        lang: String,
+        standard: String,
+        libraries: Vec<String>,
+    ) -> Self {
+        return Self {
+            dirs: DirectoryOptions::from((use_src, use_include)),
+            stdlib: StdLibOption::from((lang == "cpp" || lang == "c++", standard)),
+            libraries,
+            lang: Language::from(lang),
+            name: proj_name,
+        };
+    }
+    pub fn get_libraries(&self) -> String {
+        self.libraries
+            .iter()
+            .map(|lib| format!("-l{}", lib))
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+}
+
+pub fn generate_makefile(options: &GeneratorOptions) -> String {
+    // get c++ or c compiler.
+    let compiler = options.lang.get_compiler();
+
+    let ext = options.lang.get_extension();
+
+    let mut include: &str = "";
+    let mut src_dir: &str = "";
+    options.dirs.get_paths(&mut include, &mut src_dir);
+
+    let libs_formatted = options.get_libraries();
 
     // the variables section of the makefile.
     let make_vars = format!(
@@ -49,35 +141,46 @@ pub fn generate_makefile(
         LD_FLAGS := {}\n\
         OBJ_DIR := objs\n\
         BIN_DIR := bin",
-        compiler, std, include, libs_formatted
+        compiler, options.stdlib.value, include, libs_formatted
     );
+
+    let src_ext_pattern = if options.dirs == DirectoryOptions::UseBoth
+        || options.dirs == DirectoryOptions::UseSource
+    {
+        format!("src/%.{ext}")
+    } else {
+        format!("%.{ext}")
+    };
 
     // where to search for source files when making.
     // either match all .c files or only those in /src.
-    let srcs_wildcard = format!("$(wildcard {}*.c)", src_dir);
+    let srcs_wildcard = format!("$(wildcard {}*.{})", src_dir, ext,);
 
     // create a pattern for finding .o files.
     // again, this depends on if using /src or not.
-    let objs = objs_str(use_src_dir, &srcs_wildcard);
+    let objs = objs_str(src_ext_pattern.clone(), &srcs_wildcard);
 
     // generate the rest of the makefile, mostly targets.
-    let make_file = makefile_str(use_src_dir, srcs_wildcard, objs, proj_name);
+    let make_file = makefile_str(
+        src_ext_pattern.clone(),
+        srcs_wildcard,
+        objs,
+        options.name.clone(),
+    );
 
     // the full makefile.
     return make_vars + "\n\n" + &make_file;
 }
 
-pub fn objs_str(use_src_dir: bool, wildcard: &String) -> String {
-    // create a pattern for finding .o files.
-    if use_src_dir {
-        format!("$(patsubst src/%.c,$(OBJ_DIR)/%.o,{})", wildcard)
-    } else {
-        format!("$(patsubst %.c,$(OBJ_DIR)/%.o,{})", wildcard)
-    }
+pub fn objs_str(src_ext_pattern: String, wildcard: &String) -> String {
+    format!(
+        "$(patsubst {},$(OBJ_DIR)/%.o,{})",
+        src_ext_pattern, wildcard
+    )
 }
 
 pub fn makefile_str(
-    use_src_dir: bool,
+    src_ext_pattern: String,
     wildcard: String,
     objs: String,
     proj_name: String,
@@ -103,13 +206,7 @@ pub fn makefile_str(
         \n\
         run: {}\n\
         \t./$(BIN_DIR)/{}",
-        wildcard,
-        objs,
-        proj_name,
-        proj_name,
-        if use_src_dir { "src/%.c" } else { "%.c" },
-        proj_name,
-        proj_name
+        wildcard, objs, proj_name, proj_name, src_ext_pattern, proj_name, proj_name
     )
 }
 
