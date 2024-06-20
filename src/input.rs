@@ -66,7 +66,7 @@ pub fn read_option(
     }
 
     // trim the newline that's always present when sending a line of stdin by pressing enter.
-    buf = buf.trim_end_matches("\n").to_string();
+    buf = buf.trim_end_matches("\r\n").trim_end_matches("\n").to_string();
 
     // we apply a custom input-validator if provided.
     // if it fails, recursively attempt to get a proper input.
@@ -95,7 +95,7 @@ pub fn read_several_options(stdin: &std::io::Stdin, init_prompt: &str) -> Vec<St
                 exit(1);
             }
         }
-        buf = buf.trim_end_matches("\n").to_string();
+        buf = buf.trim_end_matches("\r\n").trim_end_matches("\n").to_string();
         if buf.is_empty() {
             println!("not adding empty option");
             continue;
