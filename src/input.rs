@@ -73,7 +73,7 @@ pub fn read_option(
     if let Some(func) = validator {
         let input_was_valid = func(buf.clone());
         if !input_was_valid {
-            println!("Invalid option. Retrying..");
+            println!("Invalid option {}. Retrying..", buf);
             return read_option(stdin, prompt, validator);
         }
     }
