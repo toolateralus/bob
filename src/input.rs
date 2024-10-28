@@ -1,52 +1,6 @@
 use std::{io::Write, path::Path, process::exit};
 pub type InputValidator = fn(input: String) -> bool;
 
-pub fn check_bashrc_for_alias() {
-    let home_dir = std::env::var("HOME").unwrap_or_else(|_| String::from(""));
-    let bashrc_path = format!("{}/.bashrc", home_dir);
-
-    // Read the contents of the .bashrc file
-    let bashrc_content = match std::fs::read_to_string(&bashrc_path) {
-        Ok(content) => content,
-        Err(_) => return,
-    };
-
-    // Check if the alias is already added
-    if bashrc_content.contains("alias bob=") {
-        return;
-    }
-
-    // Prompt the user to add the alias
-    let stdin = std::io::stdin();
-    let add_alias = read_option(
-        &stdin,
-        "Do you want to add the 'bob' alias to your .bashrc file? [y/n]",
-        Some(validate_yes_no_response),
-    )
-    .to_lowercase()
-        == "y";
-
-    if add_alias {
-        // add the alais.
-        let alias = format!(
-            "alias bob='{}/target/release/bob'",
-            std::env::current_dir().unwrap().display()
-        );
-
-        match std::fs::OpenOptions::new().append(true).open(&bashrc_path) {
-            Ok(mut file) => {
-                if let Err(error) = writeln!(file, "{}", alias) {
-                    println!("Unable to write to .bashrc file. Error: {}", error);
-                }
-                exit(0);
-            }
-            Err(error) => {
-                println!("Unable to open .bashrc file. Error: {}", error);
-            }
-        }
-    }
-}
-
 pub fn read_option(
     stdin: &std::io::Stdin,
     prompt: &str,
@@ -66,7 +20,10 @@ pub fn read_option(
     }
 
     // trim the newline that's always present when sending a line of stdin by pressing enter.
-    buf = buf.trim_end_matches("\r\n").trim_end_matches("\n").to_string();
+    buf = buf
+        .trim_end_matches("\r\n")
+        .trim_end_matches("\n")
+        .to_string();
 
     // we apply a custom input-validator if provided.
     // if it fails, recursively attempt to get a proper input.
@@ -95,7 +52,10 @@ pub fn read_several_options(stdin: &std::io::Stdin, init_prompt: &str) -> Vec<St
                 exit(1);
             }
         }
-        buf = buf.trim_end_matches("\r\n").trim_end_matches("\n").to_string();
+        buf = buf
+            .trim_end_matches("\r\n")
+            .trim_end_matches("\n")
+            .to_string();
         if buf.is_empty() {
             println!("not adding empty option");
             continue;

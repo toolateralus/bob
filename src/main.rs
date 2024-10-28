@@ -6,8 +6,11 @@ use crate::input::*;
 
 use std::{path::Path, process::exit};
 
+/*
+  NOTE: I removed the ability to add to bashrc because that's a bad way to install programs on linux.
+*/
+
 fn main() {
-    check_bashrc_for_alias();
     let stdin = std::io::stdin();
     // cd to a provided directory if the user passes in a path.
     change_directory_if_needed();
