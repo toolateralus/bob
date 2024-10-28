@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path, process::exit};
+use std::{path::Path, process::exit};
 pub type InputValidator = fn(input: String) -> bool;
 
 pub fn read_option(
