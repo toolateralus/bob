@@ -21,8 +21,7 @@ impl From<String> for Language {
     fn from(value: String) -> Self {
         match value.as_str() {
             "c" => Language::C,
-            "c++" |
-            "cpp" => Language::Cpp,
+            "c++" | "cpp" => Language::Cpp,
             _ => {
                 panic!("invalid language option");
             }
@@ -198,7 +197,6 @@ pub fn makefile_str(
         \t$(COMPILER) $(COMPILER_FLAGS) -o $(BIN_DIR)/$@ $^ $(LD_FLAGS)\n\
         \n\
         $(OBJ_DIR)/%.o: {}\n\
-        \tmkdir -p $(@D)\n\
         \t$(COMPILER) $(COMPILER_FLAGS) -c $< -o $@\n\
         \n\
         clean:\n\
