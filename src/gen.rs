@@ -38,9 +38,9 @@ impl From<(bool, String)> for StdLibOption {
         let (is_cpp, standard) = options;
         let std = if standard == "latest" {
             if is_cpp {
-                "-std=c++2b"
+                "-std=c++26"
             } else {
-                "-std=c2x"
+                "-std=c23"
             }
         } else {
             standard.as_str()
@@ -140,7 +140,7 @@ pub fn generate_makefile(options: &GeneratorOptions) -> String {
     } else {
         format!("%.{ext}")
     };
-    
+
     let name = &options.name;
     let stdlib = &options.stdlib.value;
     // the variables section of the makefile.
