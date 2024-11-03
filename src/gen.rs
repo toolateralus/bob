@@ -21,8 +21,7 @@ impl From<String> for Language {
     fn from(value: String) -> Self {
         match value.as_str() {
             "c" => Language::C,
-            "c++" |
-            "cpp" => Language::Cpp,
+            "c++" | "cpp" => Language::Cpp,
             _ => {
                 panic!("invalid language option");
             }
@@ -67,10 +66,10 @@ impl DirectoryOptions {
                 *include = "";
                 *src = "";
             }
-            DirectoryOptions::UseSource => *src = "src",
+            DirectoryOptions::UseSource => *src = "src/",
             DirectoryOptions::UseInclude => *include = "-Iinclude",
             DirectoryOptions::UseBoth => {
-                *src = "src";
+                *src = "src/";
                 *include = "-Iinclude"
             }
         }
@@ -198,13 +197,12 @@ pub fn makefile_str(
         \t$(COMPILER) $(COMPILER_FLAGS) -o $(BIN_DIR)/$@ $^ $(LD_FLAGS)\n\
         \n\
         $(OBJ_DIR)/%.o: {}\n\
-        \tmkdir -p $(@D)\n\
         \t$(COMPILER) $(COMPILER_FLAGS) -c $< -o $@\n\
         \n\
         clean:\n\
         \trm -rf $(OBJ_DIR) $(BIN_DIR)\n\
         \n\
-        run: {}\n\
+        run: all {}\n\
         \t./$(BIN_DIR)/{}",
         wildcard, objs, proj_name, proj_name, src_ext_pattern, proj_name, proj_name
     )
@@ -212,7 +210,7 @@ pub fn makefile_str(
 
 pub fn create_main_c_file(path: &str) {
     // write out a basic main.c boilerplate to help the user out.
-    let c_code = "#include <stdio.h>\nint main(int argc, char *argv[]) {\n\treturn 0;\n}";
+    let c_code = "#include <stdio.h>\nint main(int argc, char *argv[]) {\n\tprintf(\"hello squirreld\\n\");\n\treturn 0;\n}";
     match std::fs::write(path, c_code) {
         Ok(_) => {}
         Err(error) => {
