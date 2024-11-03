@@ -133,16 +133,6 @@ pub fn generate_makefile(options: &GeneratorOptions) -> String {
 
     let libs_formatted = options.get_libraries();
 
-    // the variables section of the makefile.
-    let make_vars = format!(
-        "COMPILER := {}\n\
-        COMPILER_FLAGS := {} {}\n\
-        LD_FLAGS := {}\n\
-        OBJ_DIR := objs\n\
-        BIN_DIR := bin",
-        compiler, options.stdlib.value, include, libs_formatted
-    );
-
     let src_ext_pattern = if options.dirs == DirectoryOptions::UseBoth
         || options.dirs == DirectoryOptions::UseSource
     {
@@ -150,62 +140,58 @@ pub fn generate_makefile(options: &GeneratorOptions) -> String {
     } else {
         format!("%.{ext}")
     };
-
-    // where to search for source files when making.
-    // either match all .c files or only those in /src.
-    let srcs_wildcard = format!("$(wildcard {}*.{})", src_dir, ext,);
-
-    // create a pattern for finding .o files.
-    // again, this depends on if using /src or not.
-    let objs = objs_str(src_ext_pattern.clone(), &srcs_wildcard);
-
-    // generate the rest of the makefile, mostly targets.
-    let make_file = makefile_str(
-        src_ext_pattern.clone(),
-        srcs_wildcard,
-        objs,
-        options.name.clone(),
+    
+    let name = &options.name;
+    let stdlib = &options.stdlib.value;
+    // the variables section of the makefile.
+    let make_vars = format!(
+        "PRJ_NAME := {name}\n\
+        COMPILER := {compiler}\n\
+        COMPILER_FLAGS := {stdlib} {include}\n\
+        LD_FLAGS := {libs_formatted}\n\
+        SRC_EXT_PAT := {src_ext_pattern}\n\
+        OBJ_DIR := obj\n\
+        REL_OBJ_DIR := obj/release\n\
+        DBG_OBJ_DIR := obj/debug\n\
+        REL_BIN_DIR := bin/release\n\
+        DBG_BIN_DIR := bin/debug\n\
+        BIN_DIR := bin\n\
+        SRCS := $(wildcard {src_dir}*.{ext})"
     );
 
     // the full makefile.
-    return make_vars + "\n\n" + &make_file;
+    return make_vars + "\n\n" + makefile_str();
 }
 
-pub fn objs_str(src_ext_pattern: String, wildcard: &String) -> String {
-    format!(
-        "$(patsubst {},$(OBJ_DIR)/%.o,{})",
-        src_ext_pattern, wildcard
-    )
-}
-
-pub fn makefile_str(
-    src_ext_pattern: String,
-    wildcard: String,
-    objs: String,
-    proj_name: String,
-) -> String {
-    format!(
-        "SRCS := {}\n\
-        OBJS := {}\n\
+pub fn makefile_str() -> &'static str {
+    "REL_OBJS := $(patsubst $(SRC_EXT_PAT), $(REL_OBJ_DIR)/%.o, $(SRCS))\n\
+        DBG_OBJS := $(patsubst $(SRC_EXT_PAT), $(DBG_OBJ_DIR)/%.o, $(SRCS))\n\
         \n\
-        all: directories {}\n\
+        all: directories $(PRJ_NAME)\n\
         \n\
         directories:\n\
-        \tmkdir -p $(OBJ_DIR) $(BIN_DIR)\n\
+        \tmkdir -p $(REL_OBJ_DIR) $(DBG_OBJ_DIR) $(DBG_BIN_DIR) $(REL_BIN_DIR)\n\
         \n\
-        {}: $(OBJS)\n\
-        \t$(COMPILER) $(COMPILER_FLAGS) -o $(BIN_DIR)/$@ $^ $(LD_FLAGS)\n\
+        $(PRJ_NAME): $(DBG_OBJS)\n\
+        \t$(COMPILER) $(COMPILER_FLAGS) -g -o $(DBG_BIN_DIR)/$(PRJ_NAME) $^ $(LD_FLAGS)\n\
         \n\
-        $(OBJ_DIR)/%.o: {}\n\
+        release: $(REL_OBJS)\n\
+        \t$(COMPILER) $(COMPILER_FLAGS) -O3 -o $(REL_BIN_DIR)/$(PRJ_NAME) $^ $(LD_FLAGS)\n\
+        \n\
+        $(REL_OBJ_DIR)/%.o: $(SRC_EXT_PAT)\n\
+        \t$(COMPILER) $(COMPILER_FLAGS) -c $< -o $@\n\
+        \n\
+        $(DBG_OBJ_DIR)/%.o: $(SRC_EXT_PAT)\n\
         \t$(COMPILER) $(COMPILER_FLAGS) -c $< -o $@\n\
         \n\
         clean:\n\
         \trm -rf $(OBJ_DIR) $(BIN_DIR)\n\
         \n\
-        run: all {}\n\
-        \t./$(BIN_DIR)/{}",
-        wildcard, objs, proj_name, proj_name, src_ext_pattern, proj_name, proj_name
-    )
+        run: all $(PRJ_NAME)\n\
+        \t./$(DBG_BIN_DIR)/$(PRJ_NAME)\n\
+        \n\
+        run-release: directories release\n\
+        \t./$(REL_BIN_DIR)/$(PRJ_NAME)"
 }
 
 pub fn create_main_c_file(path: &str) {
