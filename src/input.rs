@@ -66,7 +66,10 @@ pub fn read_option(
     }
 
     // trim the newline that's always present when sending a line of stdin by pressing enter.
-    buf = buf.trim_end_matches("\r\n").trim_end_matches("\n").to_string();
+    buf = buf
+        .trim_end_matches("\r\n")
+        .trim_end_matches("\n")
+        .to_string();
 
     // we apply a custom input-validator if provided.
     // if it fails, recursively attempt to get a proper input.
@@ -95,7 +98,10 @@ pub fn read_several_options(stdin: &std::io::Stdin, init_prompt: &str) -> Vec<St
                 exit(1);
             }
         }
-        buf = buf.trim_end_matches("\r\n").trim_end_matches("\n").to_string();
+        buf = buf
+            .trim_end_matches("\r\n")
+            .trim_end_matches("\n")
+            .to_string();
         if buf.is_empty() {
             println!("not adding empty option");
             continue;
@@ -103,7 +109,19 @@ pub fn read_several_options(stdin: &std::io::Stdin, init_prompt: &str) -> Vec<St
         if buf == "done" {
             println!("done fetching options");
             break;
+        } else {
+            let response = read_option(
+                stdin,
+                format!("adding library {}. Are you sure? [y/n]", buf.clone()).as_str(),
+                Some(validate_yes_no_response),
+            );
+
+            if response.to_lowercase() == "n" {
+                println!("not adding {}. retry, or type 'done' when finished.", buf);
+                continue;
+            }
         }
+
         options.push(buf);
     }
     return options;
